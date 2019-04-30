@@ -1,0 +1,5 @@
+*.html
+.ipynb
+march_users_data.ipynb
+plot_example.ipynb
+/.ipynb_checkpoints/*
