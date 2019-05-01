@@ -1,5 +1,9 @@
 import numpy as np
 import math
+import plotly as py
+import plotly.graph_objs as go
+
+
 
 
 def cholesky_method(A, b):
@@ -265,56 +269,22 @@ def backward_substitution(A):
 
     return X
 
+
 def simple_gaussian_elimination_method():
     A = np.array([
-        [1., 2., 0., 0.],
-        [-1., 0. ,-2., 1.],
-        [-3., -5., 1., 3.]
-    ])
+        [0, 2, -1, 1],
+        [3, -1, 2, 4],
+        [1, 3, -5, 1]
+    ], dtype=float)
 
     reduced_matrix = forward_elimination(A)
 
     solution = backward_substitution(reduced_matrix)
 
+    for i in range(0, solution.shape[0]):
+        print("X{} = {}".format(i + 1, solution[i]))
+
     print(solution)
-
-
-    #Forward elimination
-    i = 0
-
-    while i < A.shape[0]:
-        diagonal_element = A[i][i]
-        # GIEVEN THAT THE DIAGONAL ELEMENT IS ZERO
-        # SET THE LOWER ELEMENTS TO ZERO
-        if diagonal_element != 0:
-            for j in range(i + 1, A.shape[0]):
-                m = A[j][i] / diagonal_element
-                reduced_row = A[j] - (m * A[i])
-                A[j] = reduced_row
-            i = i + 1
-        else:
-            for k in range(i + 1, A.shape[0]):
-                if A[k][i] != 0:
-                    temp = np.array(A[i])
-                    A[i] = np.array(A[k])
-                    A[k] = np.array(temp)
-                    break
-
-    i = A.shape[0] - 1
-    X = np.array([])
-    while i >= 0:
-        diagonal_element = A[i][i]
-        if i < A.shape[0] - 1:
-            A[i][i + 1:A.shape[0]] = A[i][i + 1:A.shape[0]] * X
-
-        for j in range(i + 1, A.shape[0]):
-            A[i][A.shape[1] - 1] = A[i][A.shape[1] - 1] - A[i][j]
-
-
-        A[i][A.shape[1] - 1] = A[i][A.shape[1] - 1] / diagonal_element
-        X = np.insert(X, 0, A[i][A.shape[1] - 1], axis=0)
-        i = i - 1
-
 
 
 def jacobi_method(A, b, x, max_iter, acc):
@@ -392,6 +362,69 @@ def successive_over_relaxation(A, b, x, w, max_iter, acc):
     print("Hello")
 
 
+def data_plot():
+    data = { "2019": [
+            [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,11,9,0,24,52,50,29,21,91,1,34,44,37],
+            [76,55,4,36,54,53,30,11,58,0,12,102,98,115,101,138,84,73,95,82,81,80,92,69,103,120,72,90,0,0],
+            [91,101,1,20,85,90,103,78,55,61,57,41,74,74,85,94,0,55,52,47,77,83,57,77,0,0,0,0,0,0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ],
+    }
+    N = 1000
+    x = np.linspace(1, 30, 30)
+
+    january_call_count = np.array(data["2019"][0])
+    february_call_count = np.array(data["2019"][1])
+    march_call_count = np.array(data["2019"][2])
+
+
+    layout = go.Layout(
+        title = "Monthly Scatter Plot 2019",
+        yaxis = dict(
+            title = "Number of calls"
+        ),
+        xaxis = dict(
+            title = "Number of days in month"
+        )
+    )
+
+    trace_january = go.Scatter(
+        name="January",
+        x=x,
+        y=january_call_count,
+        mode='lines+markers'
+    )
+
+    trace_february = go.Scatter(
+        name="February",
+        x=x,
+        y=february_call_count,
+        mode='lines+markers'
+    )
+
+    trace_march = go.Scatter(
+        name="March",
+        x=x,
+        y=march_call_count,
+        mode='lines+markers'
+    )
+
+    data = [trace_january, trace_march, trace_february]
+
+    fig = go.Figure(data = data, layout=layout)
+
+
+    # Plot and embed in ipython notebook!
+    py.offline.plot(fig, filename='basic-scatter')
+
 # simple_gaussian_elimination_method()
 # A = np.array([
 #     [5, -1, 1],
@@ -426,3 +459,7 @@ x = np.array([
 #jacobi_method(A, b, x, 100, 0)
 #gauss_seidel(A, b, x, 100, 0)
 #successive_over_relaxation(A, b, x, 1.27, 100, 0)
+
+
+#simple_gaussian_elimination_method()
+data_plot()
