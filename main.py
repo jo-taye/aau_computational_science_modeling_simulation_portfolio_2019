@@ -2,8 +2,7 @@ import numpy as np
 import math
 import plotly as py
 import plotly.graph_objs as go
-
-
+import matplotlib.pyplot as plt
 
 
 def cholesky_method(A, b):
@@ -270,12 +269,8 @@ def backward_substitution(A):
     return X
 
 
-def simple_gaussian_elimination_method():
-    A = np.array([
-        [0, 2, -1, 1],
-        [3, -1, 2, 4],
-        [1, 3, -5, 1]
-    ], dtype=float)
+def simple_gaussian_elimination_method(A):
+
 
     reduced_matrix = forward_elimination(A)
 
@@ -284,11 +279,12 @@ def simple_gaussian_elimination_method():
     for i in range(0, solution.shape[0]):
         print("X{} = {}".format(i + 1, solution[i]))
 
-    print(solution)
+    return solution
 
 
 def jacobi_method(A, b, x, max_iter, acc):
     n = x[0].shape[0]
+    error = np.array([])
     for k in range(0, max_iter):
 
         x_temp = np.array([])
@@ -307,17 +303,16 @@ def jacobi_method(A, b, x, max_iter, acc):
             x_temp = np.append(x_temp, temp)
 
         current_erorr = np.amax(x_temp - x[x.shape[0] - 1])
+        error = np.append(error, current_erorr)
         if current_erorr <= acc:
             break
         x = np.vstack([x, x_temp])
-
-
-
-    print("Hello")
+        return x
 
 
 def gauss_seidel(A, b, x, max_iter, acc):
     n = x[0].shape[0]
+    error = np.array([])
     for k in range(0, max_iter):
         x = np.vstack([x, np.array([np.zeros(n)])])
         for i in range(0, n):
@@ -333,12 +328,16 @@ def gauss_seidel(A, b, x, max_iter, acc):
             x[k + 1][i] = temp
 
         current_erorr = np.amax(x[k + 1] - x[k])
+        error = np.append(error, current_erorr)
+
         if current_erorr <= acc:
             break
 
+    return error
 
 def successive_over_relaxation(A, b, x, w, max_iter, acc):
     n = x[0].shape[0]
+    error = np.array([])
     for k in range(0, max_iter):
         x = np.vstack([x, np.array([np.zeros(n)])])
         for i in range(0, n):
@@ -354,12 +353,41 @@ def successive_over_relaxation(A, b, x, w, max_iter, acc):
             x[k + 1][i] = temp
 
         current_erorr = np.amax(x[k + 1] - x[k])
+        error = np.append(error, current_erorr)
         if current_erorr <= acc:
             break
 
+    return error
 
 
-    print("Hello")
+def show_plot(title, x_axis_label, y_axis_label, data,  g_type='spline'):
+    layout = go.Layout(
+        title=title,
+        yaxis=dict(
+            title=x_axis_label
+        ),
+        xaxis=dict(
+            title=y_axis_label
+        )
+    )
+
+    traces = []
+
+    for i in data:
+        traces.append(
+            go.Scatter(
+            x = i[1],
+            y= i[2],
+            mode= "lines",
+            name= i[0],
+            line=dict(
+                shape=g_type
+            )
+        ))
+
+
+    fig = go.Figure(data=traces, layout=layout)
+    return py.offline.plot(fig)
 
 
 def data_plot():
@@ -425,6 +453,94 @@ def data_plot():
     # Plot and embed in ipython notebook!
     py.offline.plot(fig, filename='basic-scatter')
 
+
+def curve_fitting_linear():
+    y = np.array([76, 53, 102, 73, 69, 0])
+    x = np.linspace(1, y.size, y.size) #GENERATE THE INDEPENDENT VARIABLE FROM THE DEPENDENT DATA POINT
+
+
+    n = x.size
+    sum_x = np.sum(x)
+    sum_y = np.sum(y)
+    sum_xy = np.sum(x * y)
+    sum_x_sqr = np.sum(x * x)
+
+    #NOW WE CAN APPLY GAUSS JORDAN TO SOLVE FOR A AND B FOR THE EQUATION Y = ax + b
+
+    print("x: {}, y: {}, n: {}, sum_x: {}, sum_y: {}, sum_x_sqr: {}, sum_xy: {}".format(x, y, n, sum_x, sum_y, sum_x_sqr, sum_xy))
+
+
+    # y = mx + b
+    #
+    A = np.array([
+        [sum_x, n, sum_y],
+        [sum_x_sqr, sum_x, sum_xy]
+    ], dtype=float)
+
+    solution = simple_gaussian_elimination_method(A)
+
+    def f(x):
+        return (solution[0] * x) + solution[1]
+
+    vfunc = np.vectorize(f)
+
+    x_ = np.linspace(1, 6, 100)
+    result = vfunc(np.array(x_))
+
+    plt.plot(x.tolist(), y.tolist(), label="real data")
+    plt.plot(x_.tolist(), result.tolist(), label="interpolated data")
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.title('Non linear curve fitting')
+    plt.legend()
+    plt.show()
+
+    print("solution: {}".format(solution))
+
+def curve_fitting_non_linear():
+    y = np.array([76, 53, 102, 73, 69, 0])
+    x = np.linspace(1, y.size, y.size)  # GENERATE THE INDEPENDENT VARIABLE FROM THE DEPENDENT DATA POINT
+
+    n = x.size
+    sum_x = np.sum(x)
+    sum_y = np.sum(y)
+    sum_xy = np.sum(x * y)
+
+    sum_x_sqr = np.sum(x * x)
+    sum_x_cube = np.sum(x * x * x)
+    sum_x_pw4 = np.sum(x * x * x * x)
+    sum_x_sqr_y = np.sum((x * x) * y)
+
+
+    A = np.array([
+        [sum_x_sqr, sum_x, n, sum_y],
+        [sum_x_cube, sum_x_sqr, sum_x, sum_xy],
+        [sum_x_pw4, sum_x_cube, sum_x_sqr, sum_x_sqr_y]
+    ], dtype=float)
+
+
+    solution = simple_gaussian_elimination_method(A)
+
+    def f(x):
+        return (solution[0] * (x * x)) + (solution[1] * x) + solution[2]
+
+    vfunc = np.vectorize(f)
+
+    x_ = np.linspace(1, 6, 100)
+    result = vfunc(np.array(x_))
+
+
+    plt.plot(x.tolist(), y.tolist(), label="real data")
+    plt.plot(x_.tolist(), result.tolist(), label="interpolated data")
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.title('Non linear curve fitting')
+    plt.legend()
+    plt.show()
+
+
+    print("solution: {}", solution)
+
 # simple_gaussian_elimination_method()
 # A = np.array([
 #     [5, -1, 1],
@@ -433,33 +549,88 @@ def data_plot():
 # ], dtype=float)
 
 
-A = np.array([
-    [2, 1, 0, 0],
-    [1, 2, 1, 0],
-    [0, 1, 2, 1],
-    [0, 0, 1, 2]
-], dtype=float)
+# A = np.array([
+#     [2, 1, 0, 0],
+#     [1, 2, 1, 0],
+#     [0, 1, 2, 1],
+#     [0, 0, 1, 2]
+# ], dtype=float)
+
+# A = np.array([
+#     [9, 3, 4, 7],
+#     [4, 3, 4, 8],
+#     [1, 1, 1, 3]
+# ], dtype=float)
+
+#
+# A = np.array([
+#     [5, -1, 1],
+#     [2, 8, -1],
+#     [-1, 1, 4]
+# ])
+# b = np.array([10, 11, 3])
+#
+#
+# b = np.array([4, 8, 12, 11], dtype=float)
+#
+#
+# x = np.array([
+#     [0, 0, 0]
+# ])
+#
+# curve_fitting_linear()
+
+#
+# successive_over_relaxation(A, b, x, 1.25, 1000, 0)
+# #simple_gaussian_elimination_method()
+# #data_plot()
+#
+# error_jacobi = jacobi_method(A, b, x, 1000, 0)
+# error_gauss_seidel = gauss_seidel(A,b, x, 1000, 0)
+# error_successive_over_relaxation = successive_over_relaxation(A, b, x, 1.25, 1000, 0)
+#
+# error_jacobi = ["Jacobi", list(range(1, len(error_jacobi))), error_jacobi]
+# error_gauss_seidel = ["Gauss seidel", list(range(1, len(error_gauss_seidel))), error_gauss_seidel]
+# error_successive_over_relaxation = ['Successive Over relaxation', list(range(1, len(error_successive_over_relaxation))), error_successive_over_relaxation]
+# data_points = [error_jacobi, error_gauss_seidel, error_successive_over_relaxation]
+#
+#
+# show_plot("", "", "", data_points)
+# x = list(range(0, error.shape[0]))
+# y = list(error)
+# show_plot("", "", "", x, y, x, y)
+
+def f(x):
+    A = np.array([
+        [1, 1, 1, 1, 76],
+        [8, 4, 2, 1, 53],
+        [64, 16, 4, 1, 73],
+        [125, 25, 5, 1, 69]
+    ], dtype=float)
+    solution = simple_gaussian_elimination_method(A)
+    return (solution[0] * (x ** 3)) + (solution[1] * (x ** 2)) + (solution[2] * (x)) + (solution[3])
+
+
+vfunc = np.vectorize(f)
+
+x_ = np.linspace(1, 6, 100)
+result = vfunc(np.array(x_))
+
+print("")
+
+
 
 A = np.array([
-    [9, 3, 4, 7],
-    [4, 3, 4, 8],
-    [1, 1, 1, 3]
+    [1, 1, 1, 1],
+    [8, 4, 2, 1],
+    [64, 16, 4, 1],
+    [125, 25, 5, 1]
 ], dtype=float)
-
-
-b = np.array([4, 8, 12, 11], dtype=float)
-
-# do_little(A, b)
-#crouts_method(A, b)
-#test()
-# cholesky_method(A, b)
+b = np.array([76, 53, 73, 69], dtype=float)
 x = np.array([
     [0, 0, 0, 0]
 ])
-#jacobi_method(A, b, x, 100, 0)
-#gauss_seidel(A, b, x, 100, 0)
-#successive_over_relaxation(A, b, x, 1.27, 100, 0)
 
-
-#simple_gaussian_elimination_method()
-data_plot()
+x = jacobi_method(A, b, x, 1000, 0.0005)
+# x = simple_gaussian_elimination_method(A)
+print("")
